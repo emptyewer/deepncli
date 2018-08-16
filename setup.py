@@ -40,7 +40,7 @@ for item in requirements:
 print(os.listdir('.'))
 
 
-setup_requirements = ['pytest-runner', 'utils']
+setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
@@ -66,7 +66,8 @@ setup(
     include_package_data=True,
     keywords='deepncli',
     name='deepncli',
-    packages=find_packages(include=['deepncli']),
+    packages=find_packages(include=['deepncli', 'deepncli.db', 'deepncli.junction', 'deepncli.utils'],
+                           exclude=['deepncli.data']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
