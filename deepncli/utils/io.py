@@ -10,12 +10,12 @@ magenta_fg = partial(click.style, fg='magenta')
 red_fg = partial(click.style, fg='red')
 
 
-def check_and_create_folders(directory, folder_list, non_interactive=False):
+def check_and_create_folders(directory, folder_list, interactive=False):
     for folder in folder_list:
         if os.path.exists(os.path.join(directory, folder)):
             click.echo(red_fg(">>> WARNING: Folder (%s) already exists in path (%s). "
                               "Existing files will be overwritten and garbled!" % (folder.upper(), directory)))
-            if not non_interactive:
+            if not interactive:
                 if not click.confirm(magenta_fg('Do you want to continue? If you do, '
                                                 'the existing files will be overwritten')):
                     click.echo(red_fg("ABORTING..."))

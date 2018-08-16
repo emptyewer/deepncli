@@ -137,14 +137,14 @@ def initialize(config, *args, **kwargs):
 @deepn_option("--seq", required=False, default="", help="junction sequence used in sequencing. "
                                                         "If provided default junction sequence will be ignored")
 @deepn_option("--exclude_seq", required=False, default="", help="sequence to exclude from junction matching")
-@deepn_option("--unmapped", is_flag=True, default=False, help="if flag is enabled, .sam files will be read from "
-                                                              "unmapped_sam_files folder")
-@deepn_option("--non_interactive", is_flag=True, default=False, help="if enabled interactive session will be turned off"
-                                                                     ". (careful, files maybe be overwritten")
+@deepn_option("--unmapped", is_flag=True, help="if flag is enabled, .sam files will "
+                                               "be read from unmapped_sam_files folder")
+@deepn_option("--interactive", is_flag=True, help="if enabled interactive session will be turned off (careful, "
+                                                  "files maybe be overwritten")
 @pass_config
 def junction_make(config, *args, **kwargs):
     click.echo(green_fg("\n{}  Junction Make  {}\n".format(">" * 10, "<" * 10)))
-    input_data_folder = 'unmapped_sam_files'  # Manage name of input folder here
+    input_data_folder = 'unmapped_sam_files' if kwargs['unmapped'] else 'sam_files'
     junction_folder = 'junction_files'  # Manage name of junction reads output folder here
     blast_results_folder = 'blast_results'  # Manage name of blast results output folder here
     blast_results_query = 'blast_results_query'  # Manage name of blast results dictionary output folder here
@@ -158,7 +158,7 @@ def junction_make(config, *args, **kwargs):
     verify_options(*args, **kwargs)
     # create folders for junction make
     check_and_create_folders(kwargs['dir'], ['junction_files', 'blast_results', 'blast_results_query'],
-                             non_interactive=kwargs['non_interactive'])
+                             interactive=kwargs['interactive'])
     # search for junctions
     junction_search(kwargs['dir'], junction_folder, input_data_folder, blast_results_folder,
                     junction_sequence, exclusion_sequence)
