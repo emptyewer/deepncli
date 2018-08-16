@@ -15,7 +15,7 @@ def check_and_create_folders(directory, folder_list, interactive=False):
         if os.path.exists(os.path.join(directory, folder)):
             click.echo(red_fg(">>> WARNING: Folder (%s) already exists in path (%s). "
                               "Existing files will be overwritten and garbled!" % (folder.upper(), directory)))
-            if not interactive:
+            if interactive:
                 if not click.confirm(magenta_fg('Do you want to continue? If you do, '
                                                 'the existing files will be overwritten')):
                     click.echo(red_fg("ABORTING..."))
