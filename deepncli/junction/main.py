@@ -126,7 +126,7 @@ def blast_search(directory, db_name, blast_results_folder):
     for file_name in file_list:
         start = time.time()
         output_file = os.path.join(directory, blast_results_folder, file_name.replace(".junctions.fa", '.blast.txt'))
-        click.echo(cyan_fg(">>> Running BLAST search for file: " + file_name))
+        click.echo(yellow_fg(">>> Running BLAST search for file: " + file_name))
         blast_command_list = [os.path.join(blast_path, 'blastn' + suffix),
                               '-query', os.path.join(directory, blast_results_folder, file_name), '-db', db_path,
                               '-task', 'blastn', '-dust', 'no', '-num_threads', str(parallel.cpu_count()),
