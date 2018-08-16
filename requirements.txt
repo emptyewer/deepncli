@@ -1,4 +1,5 @@
 tqdm
+requests
 peewee==3.6.4
 apsw==3.9.2.post1
 joblib==0.12.2
