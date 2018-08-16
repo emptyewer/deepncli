@@ -154,6 +154,7 @@ def junction_make(config, *args, **kwargs):
     exclusion_sequence = kwargs['exclude_seq'].replace(" ", "")
     blast_db = blast_dbs[kwargs['genome']]
     gene_list_file = gene_lists[kwargs['genome']]
+    download_data()
     # verify if the options provided are valid
     verify_options(*args, **kwargs)
     # create folders for junction make
