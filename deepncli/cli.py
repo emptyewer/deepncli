@@ -13,8 +13,8 @@ import stat
 from tqdm import tqdm
 from functools import partial
 # project imports
-from utils.io import check_and_create_folders
-from junction.main import junction_search, blast_search, parse_blast_results
+from .utils.io import check_and_create_folders
+from .junction.main import junction_search, blast_search, parse_blast_results
 
 green_fg = partial(click.style, fg='green')
 yellow_fg = partial(click.style, fg='yellow')
@@ -154,8 +154,6 @@ def junction_make(config, *args, **kwargs):
     exclusion_sequence = kwargs['exclude_seq'].replace(" ", "")
     blast_db = blast_dbs[kwargs['genome']]
     gene_list_file = gene_lists[kwargs['genome']]
-    # Download data if not already downloaded
-    download_data()
     # verify if the options provided are valid
     verify_options(*args, **kwargs)
     # create folders for junction make

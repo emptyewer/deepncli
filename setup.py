@@ -40,7 +40,7 @@ for item in requirements:
 print(os.listdir('.'))
 
 
-setup_requirements = ['pytest-runner', ]
+setup_requirements = ['pytest-runner', 'utils']
 
 test_requirements = ['pytest', ]
 
