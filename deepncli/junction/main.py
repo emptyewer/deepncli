@@ -44,16 +44,6 @@ def junctions_in_read(read, junction_sequences):
     return junction_index, match_index
 
 
-def print_read_progress(read_progress, filename, progress):
-    read_progress[filename] = progress
-    output_line = "\rRead"
-    for k, v in read_progress.items():
-        output_line += " (%.3f of file %s)" % (v, k)
-    print read_progress
-    return read_progress
-    # sys.stdout.write(output_line)
-
-
 def search_for_junctions(filepath, jseqs, exclusion_sequence, output_filehandle, f, input_file_size):
     hits_count = 0
     processor = PProcessor()
