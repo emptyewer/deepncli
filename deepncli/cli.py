@@ -140,8 +140,7 @@ def initialize(config, *args, **kwargs):
 @deepn_option("--exclude_seq", required=False, default="", help="sequence to exclude from junction matching")
 @deepn_option("--unmapped", is_flag=True, help="if flag is enabled, .sam files will "
                                                "be read from unmapped_sam_files folder")
-@deepn_option("--interactive", is_flag=True, help="if enabled interactive session will be turned off (careful, "
-                                                  "files maybe be overwritten")
+@deepn_option("--interactive", is_flag=True, help="if enabled interactive session will be turned on.")
 @pass_config
 def junction_make(config, *args, **kwargs):
     click.echo(green_fg("\n{}  Junction Make  {}\n".format(">" * 10, "<" * 10)))
