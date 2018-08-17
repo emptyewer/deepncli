@@ -150,7 +150,7 @@ def junction_make(config, *args, **kwargs):
     blast_results_folder = 'blast_results'  # Manage name of blast results output folder here
     blast_results_query = 'blast_results_query'  # Manage name of blast results dictionary output folder here
     junction_sequence = junction_sequences[kwargs['genome']].replace(" ", "").split(",")
-    if kwargs['seq']:
+    if kwargs['seq'] != "":
         junction_sequence = kwargs['seq'].replace(" ", "").split(",")
     exclusion_sequence = kwargs['exclude_seq'].replace(" ", "")
     blast_db = blast_dbs[kwargs['genome']]
