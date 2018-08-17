@@ -134,7 +134,7 @@ def initialize(config, *args, **kwargs):
 @main.command()
 @deepn_option("--dir", required=True, help="path to work folder")
 @deepn_option("--genome", required=True, help="name of the reference organism. "
-                                              "options: mm10/hg38/saccer3/hg38_pGAD,saccer3_pGAD")
+                                              "options: mm10/hg38/saccer3/hg38_pGAD/saccer3_pGAD")
 @deepn_option("--seq", required=False, default="", help="junction sequence used in sequencing. "
                                                         "If provided default junction sequence will be ignored")
 @deepn_option("--exclude_seq", required=False, default="", help="sequence to exclude from junction matching")
