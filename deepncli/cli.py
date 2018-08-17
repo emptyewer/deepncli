@@ -127,6 +127,7 @@ def initialize(config, *args, **kwargs):
         click.echo(red_fg(">>> ERROR: Specified work folder (%s) already exists." % kwargs['dir']))
         sys.exit(1)
     check_and_create_folders(kwargs['dir'], ['mapped_sam_files', 'unmapped_sam_files', 'sam_files'])
+    download_data()
     click.echo(green_fg(">>> Sucessfully initiated work folder."))
 
 
