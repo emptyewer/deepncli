@@ -44,7 +44,7 @@ def junctions_in_read(read, junction_sequences):
     return junction_index, match_index
 
 
-def search_for_junctions(filepath, jseqs, exclusion_sequence, output_filehandle, f, input_file_size):
+def search_for_junctions(filepath, jseqs, exclusion_sequence, output_filehandle):
     hits_count = 0
     processor = PProcessor()
 
@@ -88,10 +88,9 @@ def jsearch(directory, filename, input_data_folder, junction_folder, junction_se
     start = time.time()
     filepath = os.path.join(directory, input_data_folder, filename)
 
-    input_file_size = os.path.getsize(filepath)
     output_file_handle = open(os.path.join(directory, junction_folder, filename.replace(".sam", '.junctions.txt')), 'w')
     search_for_junctions(filepath, junction_sequence, exclusion_sequence,
-                         output_file_handle, filename, input_file_size)
+                         output_file_handle)
     output_file_handle.close()
     finish = time.time()
     elapsed = finish - start
