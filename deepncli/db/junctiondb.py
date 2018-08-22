@@ -1,8 +1,10 @@
 from peewee import *
 from playhouse.apsw_ext import APSWDatabase
+from playhouse.migrate import SqliteMigrator, migrate
+
 
 database = APSWDatabase(None, pragmas={'journal_mode': 'off',
-                                       'cache_size': -500 * 1000,
+                                       'cache_size': -500*1000,
                                        'ignore_check_constraints': 0,
                                        'synchronous': 0,
                                        'foreign_keys': 1,
@@ -57,10 +59,17 @@ class JunctionsDatabase(object):
     def __init__(self, db_name):
         self.db = database
         self.db.init(db_name)
+        self.migrator = SqliteMigrator(self.db)
 
     def create_tables(self):
         self.db.drop_tables([Stats, Junction, Gene])
         self.db.create_tables([Gene, Junction, Stats])
+        self.create_indexes()
+
+    def create_indexes(self):
+        migrate(self.migrator.add_index('gene', ('id', 'gene_name', 'nm_number')),
+                self.migrator.add_index('junction', ('id', 'gene_id')),
+                self.migrator.add_index('stats', ('id', 'gene_id')))
 
     def close_db(self):
         self.db.close()

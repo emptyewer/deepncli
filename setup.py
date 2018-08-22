@@ -3,7 +3,12 @@
 
 """The setup script."""
 import os
+import sys
+import atexit
 from setuptools import setup, find_packages
+from setuptools.command.install import install
+from setuptools.command.develop import develop
+from deepncli.utils.io import download_data
 
 try:  # for pip >= 10
     from pip._internal import req
@@ -39,10 +44,26 @@ for item in requirements:
         requires.append(str(item.req))
 print(os.listdir('.'))
 
-
 setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
+
+
+class PostInstallCommand(install):
+    """Post-installation for installation mode."""
+
+    def run(self):
+        install.run(self)
+        download_data()
+
+
+class PostDevelopCommand(develop):
+    """Post-installation for installation mode."""
+
+    def run(self):
+        develop.run(self)
+        download_data()
+
 
 setup(
     author="Venky Krishnamani",
@@ -61,6 +82,10 @@ setup(
         ],
     },
     install_requires=requires,
+    cmdclass={
+        'develop': PostDevelopCommand,
+        'install': PostInstallCommand,
+    },
     license="MIT license",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
@@ -72,6 +97,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/emptyewer/deepncli',
-    version='0.1.0',
+    version='0.2.0',
     zip_safe=False,
 )
