@@ -7,7 +7,6 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 from setuptools.command import easy_install
-from deepncli.utils.download import download_data
 
 try:  # for pip >= 10
     from pip._internal import req
@@ -52,11 +51,12 @@ class PostInstallCommand(install):
     """Post-installation for installation mode."""
 
     def run(self):
+        install.run(self)
         easy_install.main(['requests'])
         easy_install.main(['click'])
         easy_install.main(['tqdm'])
+        from deepncli.utils.download import download_data
         download_data()
-        install.run(self)
 
 
 class PostDevelopCommand(develop):
@@ -64,6 +64,10 @@ class PostDevelopCommand(develop):
 
     def run(self):
         develop.run(self)
+        easy_install.main(['requests'])
+        easy_install.main(['click'])
+        easy_install.main(['tqdm'])
+        from deepncli.utils.download import download_data
         download_data()
 
 
