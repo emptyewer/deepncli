@@ -52,10 +52,11 @@ class PostInstallCommand(install):
     """Post-installation for installation mode."""
 
     def run(self):
-        install.run(self)
+        easy_install.main(['requests'])
         easy_install.main(['click'])
         easy_install.main(['tqdm'])
         download_data()
+        install.run(self)
 
 
 class PostDevelopCommand(develop):
