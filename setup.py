@@ -6,6 +6,7 @@ import os
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
+from setuptools.command import easy_install
 from deepncli.utils.download import download_data
 
 try:  # for pip >= 10
@@ -52,6 +53,8 @@ class PostInstallCommand(install):
 
     def run(self):
         install.run(self)
+        easy_install.main(['click'])
+        easy_install.main(['tqdm'])
         download_data()
 
 

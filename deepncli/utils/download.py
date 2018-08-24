@@ -1,9 +1,19 @@
 import os
 import imp
+import math
 import stat
-import requests
 import zipfile
+import requests
 import platform
+import click
+from tqdm import tqdm
+from functools import partial
+
+green_fg = partial(click.style, fg='green')
+yellow_fg = partial(click.style, fg='yellow')
+magenta_fg = partial(click.style, fg='magenta')
+cyan_fg = partial(click.style, fg='cyan')
+red_fg = partial(click.style, fg='red')
 
 
 def download_url(url, output_path):
@@ -16,9 +26,10 @@ def download_url(url, output_path):
         total_size = int(r.headers.get('content-length', 0))
         block_size = 1024
         wrote = 0
-        print(">>> Downloading %s" % os.path.basename(url))
+        click.echo(green_fg(">>> Downloading %s" % os.path.basename(url)))
         with open(file_path, 'wb') as f:
-            for data in r.iter_content(block_size):
+            for data in tqdm(r.iter_content(block_size), total=math.ceil(total_size//block_size), unit='B',
+                             unit_scale=True):
                 wrote = wrote + len(data)
                 f.write(data)
         zip_ref = zipfile.ZipFile(file_path, 'r')
@@ -26,11 +37,11 @@ def download_url(url, output_path):
         zip_ref.close()
         os.remove(file_path)
         if total_size != 0 and wrote != total_size:
-            print(">>> ERROR, something went wrong")
+            click.echo(red_fg(">>> ERROR, something went wrong"))
 
 
 def download_data():
-    print(">>> Attempting to download data...")
+    click.echo(magenta_fg(">>> Attempting to download data..."))
     download_list = ["https://github.com/emptyewer/deepncli/releases/download/support/lists.zip",
                      "https://github.com/emptyewer/deepncli/releases/download/support/blastdb.zip"]
     if platform.system() == "Windows":
