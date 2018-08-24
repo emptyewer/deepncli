@@ -3,12 +3,10 @@
 
 """The setup script."""
 import os
-import sys
-import atexit
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
-from deepncli.utils.io import download_data
+from deepncli.utils.download import download_data
 
 try:  # for pip >= 10
     from pip._internal import req
