@@ -106,10 +106,10 @@ def junction_make(config, *args, **kwargs):
     check_and_create_folders(kwargs['dir'], ['junction_files', 'blast_results', 'blast_results_query'],
                              interactive=kwargs['interactive'])
     # search for junctions
-    # junction_search(kwargs['dir'], junction_folder, input_data_folder, blast_results_folder,
-    #                 junction_sequence, exclusion_sequence)
+    junction_search(kwargs['dir'], junction_folder, input_data_folder, blast_results_folder,
+                    junction_sequence, exclusion_sequence)
     # blast the junctions
-    # blast_search(kwargs['dir'], blast_db, blast_results_folder)
+    blast_search(kwargs['dir'], blast_db, blast_results_folder)
     # parse blast results
     parse_blast_results(kwargs['dir'], blast_results_folder, blast_results_query, gene_list_file)
 
