@@ -6,7 +6,6 @@ import os
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
-from setuptools.command import easy_install
 
 try:  # for pip >= 10
     from pip._internal import req
@@ -42,7 +41,7 @@ for item in requirements:
         requires.append(str(item.req))
 print(os.listdir('.'))
 
-setup_requirements = ['pytest-runner', ]
+setup_requirements = ['pytest-runner', 'tqdm', 'requests', 'click']
 
 test_requirements = ['pytest', ]
 
@@ -52,9 +51,6 @@ class PostInstallCommand(install):
 
     def run(self):
         install.run(self)
-        easy_install.main(['requests'])
-        easy_install.main(['click'])
-        easy_install.main(['tqdm'])
         from deepncli.utils.download import download_data
         download_data()
 
@@ -64,9 +60,6 @@ class PostDevelopCommand(develop):
 
     def run(self):
         develop.run(self)
-        easy_install.main(['requests'])
-        easy_install.main(['click'])
-        easy_install.main(['tqdm'])
         from deepncli.utils.download import download_data
         download_data()
 
