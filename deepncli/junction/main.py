@@ -1,6 +1,5 @@
 import os
 import sys
-import imp
 import time
 import click
 import subprocess
@@ -118,8 +117,8 @@ def blast_search(directory, db_name, blast_results_folder):
     suffix = ''
     if _platform.startswith('win'):
         suffix = '.exe'
-    blast_path = os.path.join(imp.find_module("deepncli")[1], "data", "blast")
-    db_path = os.path.join(imp.find_module("deepncli")[1], db_name)
+    blast_path = os.path.join(os.path.expanduser('~'), ".deepn", "data", "blast")
+    db_path = os.path.join(os.path.expanduser('~'), ".deepn", db_name)
     click.echo(green_fg(">>> Selected Blast DB: %s" % db_name))
     file_list = get_file_list(directory, blast_results_folder, ".fa")
     for file_name in file_list:
@@ -174,7 +173,7 @@ def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_result
     click.echo(magenta_fg(">>> Parsing blast results for file %s" % blasttxt))
     blast_parsed_results_filepath = os.path.join(directory, blast_results_query_folder,
                                                  blasttxt.replace(".blast.txt", ".db"))
-    gene_list_path = os.path.join(imp.find_module("deepncli")[1], gene_list_file)
+    gene_list_path = os.path.join(os.path.expanduser('~'), ".deepn", gene_list_file)
     # Initialize database for storage
     jdb = JunctionsDatabase(blast_parsed_results_filepath)
     jdb.create_tables()
