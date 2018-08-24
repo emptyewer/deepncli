@@ -7,6 +7,7 @@ import click
 from functools import partial
 # project imports
 from .utils.io import check_and_create_folders
+from .utils.download import download_data
 from .junction.main import junction_search, blast_search, parse_blast_results
 
 green_fg = partial(click.style, fg='green')
@@ -60,6 +61,7 @@ def verify_options(*args, **kwargs):
 def main(config, verbose, debug):
     """Console script for deepncli."""
     click.echo(magenta_fg("\n{}  DEEPN  {}\n".format("*"*10, "*"*10)))
+    download_data()
     config.verbose = verbose  # pragma: no cover
     config.debug = debug  # pragma: no cover
 

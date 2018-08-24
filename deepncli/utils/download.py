@@ -1,5 +1,4 @@
 import os
-import imp
 import math
 import stat
 import zipfile
@@ -50,7 +49,7 @@ def download_data():
         download_list.append("https://github.com/emptyewer/deepncli/releases/download/support/blast_linux.zip")
     elif platform.system() == "Darwin":
         download_list.append("https://github.com/emptyewer/deepncli/releases/download/support/blast_osx.zip")
-    output_dir = os.path.join(imp.find_module("deepncli")[1], "data")
+    output_dir = os.path.join(os.path.expanduser('~'), ".deepn", "data")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     for link in download_list:

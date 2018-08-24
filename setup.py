@@ -4,8 +4,6 @@
 """The setup script."""
 import os
 from setuptools import setup, find_packages
-from setuptools.command.install import install
-from setuptools.command.develop import develop
 
 try:  # for pip >= 10
     from pip._internal import req
@@ -41,28 +39,9 @@ for item in requirements:
         requires.append(str(item.req))
 print(os.listdir('.'))
 
-setup_requirements = ['pytest-runner', 'tqdm', 'requests', 'click']
+setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
-
-
-class PostInstallCommand(install):
-    """Post-installation for installation mode."""
-
-    def run(self):
-        install.run(self)
-        from deepncli.utils.download import download_data
-        download_data()
-
-
-class PostDevelopCommand(develop):
-    """Post-installation for installation mode."""
-
-    def run(self):
-        develop.run(self)
-        from deepncli.utils.download import download_data
-        download_data()
-
 
 setup(
     author="Venky Krishnamani",
@@ -81,10 +60,6 @@ setup(
         ],
     },
     install_requires=requires,
-    cmdclass={
-        'develop': PostDevelopCommand,
-        'install': PostInstallCommand,
-    },
     license="MIT license",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
