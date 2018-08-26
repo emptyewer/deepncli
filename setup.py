@@ -39,7 +39,7 @@ for item in requirements:
         requires.append(str(item.req))
 print(os.listdir('.'))
 
-setup_requirements = ['pytest-runner', ]
+setup_requirements = []
 
 test_requirements = ['pytest', ]
 
