@@ -42,7 +42,8 @@ def download_url(url, output_path):
 def download_data():
     click.echo(magenta_fg(">>> Attempting to download data..."))
     download_list = ["https://github.com/emptyewer/deepncli/releases/download/support/lists.zip",
-                     "https://github.com/emptyewer/deepncli/releases/download/support/blastdb.zip"]
+                     "https://github.com/emptyewer/deepncli/releases/download/support/blastdb.zip",
+                     "https://github.com/emptyewer/deepncli/releases/download/support/exons.zip"]
     if platform.system() == "Windows":
         download_list.append("https://github.com/emptyewer/deepncli/releases/download/support/blast_win.zip")
     elif platform.system() == "Linux":

@@ -12,6 +12,19 @@ cyan_fg = partial(click.style, fg='cyan')
 red_fg = partial(click.style, fg='red')
 
 
+def count_lines(filename):
+    f = open(filename)
+    lines = 0
+    buf_size = 1024 * 1024
+    read_f = f.read
+
+    buf = read_f(buf_size)
+    while buf:
+        lines += buf.count('\n')
+        buf = read_f(buf_size)
+    return lines
+
+
 def check_and_create_folders(directory, folder_list, interactive=False):
     for folder in folder_list:
         if os.path.exists(os.path.join(directory, folder)):

@@ -1,3 +1,9 @@
+# project imports
+from ..db.junctiondb import JunctionsDatabase, Gene, Junction, Stats
+from ..utils.io import get_sam_filelist, get_file_list, make_fasta_file, concatenate_dicts, count_lines
+from ..utils.time import elapsed_time
+from proteinprocessor import ProteinProcessor as PProcessor
+# Other imports
 import os
 import sys
 import time
@@ -10,10 +16,7 @@ import joblib.parallel as parallel
 from collections import Counter
 import warnings
 warnings.filterwarnings("ignore")
-# project imports
-from ..db.junctiondb import JunctionsDatabase, Gene, Junction, Stats
-from ..utils.io import get_sam_filelist, get_file_list, make_fasta_file, concatenate_dicts
-from proteinprocessor import ProteinProcessor as PProcessor
+
 
 green_fg = partial(click.style, fg='green')
 yellow_fg = partial(click.style, fg='yellow')
@@ -61,7 +64,8 @@ def search_for_junctions(filepath, jseqs, exclusion_sequence, output_filehandle)
         return value
 
     input_filehandle = open(filepath)
-    for line in tqdm(input_filehandle.readlines(), unit=' lines'):
+    bar = tqdm(total=count_lines(filepath), unit=' lines')
+    for line in input_filehandle:
         line_split = line.strip().split()
         if line_split[0][0] != "@" and line_split[2] == "*":
             sequence_read = line_split[9]
@@ -72,6 +76,7 @@ def search_for_junctions(filepath, jseqs, exclusion_sequence, output_filehandle)
                 rev_indexes = junctions_in_read(rev_sequence_read, jseqs)
                 hit = check_matching_criteria(line_split, rev_indexes, jseqs, rev_sequence_read)
             hits_count += hit
+        bar.update(1)
     input_filehandle.close()
 
 
@@ -92,8 +97,8 @@ def jsearch(directory, filename, input_data_folder, junction_folder, junction_se
                          output_file_handle)
     output_file_handle.close()
     finish = time.time()
-    elapsed = finish - start
-    click.echo(cyan_fg("Finished searching junctions in %s in time %f seconds" % (filename, elapsed)))
+    hr, min, sec = elapsed_time(start, finish)
+    click.echo(cyan_fg("Finished searching junctions in %s in time %d hr, %d min, %d sec" % (filename, hr, min, sec)))
 
 
 def junction_search(directory, junction_folder, input_data_folder, blast_results_folder,
@@ -132,13 +137,13 @@ def blast_search(directory, db_name, blast_results_folder):
         blast_pipe = subprocess.Popen(blast_command_list, shell=False)
         blast_pipe.wait()
         finish = time.time()
-        elapsed = finish - start
-        click.echo(cyan_fg("Finished blasting file %s in time %f seconds" % (file_name, elapsed)))
+        hr, min, sec = elapsed_time(start, finish)
+        click.echo(cyan_fg("Finished blasting file %s in time %d hr, %d min, %d sec" % (file_name, hr, min, sec)))
 
 
 def create_gene_list(gene_list_path):
     fh = open(gene_list_path, "r")
-    for line in fh.readlines():
+    for line in fh:
         split = line.split()
         if not Gene.select().where(Gene.gene_name == split[1], Gene.orf_start == int(split[6]) + 1,
                                    Gene.nm_number == split[0], Gene.orf_stop == int(split[7])):
@@ -184,7 +189,8 @@ def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_result
     blast_count = 1
     collect_results = True
     click.echo(yellow_fg(">>> Counting blast hits for file %s ..." % blasttxt))
-    for line in tqdm(blast_results_handle.readlines(), unit=' lines'):
+    bar = tqdm(total=count_lines(os.path.join(directory, blast_results_folder, blasttxt)), unit=' lines')
+    for line in blast_results_handle:
         line.strip()
         split = line.split()
         if "BLASTN" in line:
@@ -194,8 +200,7 @@ def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_result
         if "hits" in line and int(split[1]) > 100:
             collect_results = False
 
-        if split[0] != '#' and collect_results and float(split[2]) > 98 and float(split[11]) > 50.0 and \
-            float(split[11]) > previous_bitscore:
+        if split[0] != '#' and collect_results and float(split[2]) > 98 and float(split[11]) > 50.0 and float(split[11]) > previous_bitscore:
             previous_bitscore = float(split[11]) * 0.98
             nm_number = split[1]
             gene_record = Gene.select().where(Gene.nm_number == nm_number)
@@ -234,11 +239,12 @@ def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_result
             else:
                 junction_record[0].count += 1
                 junction_record[0].save()
+        bar.update(1)
     click.echo(green_fg(">>> Generating stats for file %s ..." % blasttxt))
     generate_stats(blast_count)
     finish = time.time()
-    elapsed = finish - start
-    click.echo(cyan_fg("Finished parsing file %s in time %f seconds" % (blasttxt, elapsed)))
+    hr, min, sec = elapsed_time(start, finish)
+    click.echo(cyan_fg("Finished parsing file %s in time %d hr, %d min, %d sec" % (blasttxt, hr, min, sec)))
     jdb.close_db()
 
 
