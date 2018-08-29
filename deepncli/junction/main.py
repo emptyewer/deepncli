@@ -247,7 +247,7 @@ def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_result
         Junction.insert(gene=gene, position=position, query_start=query_start,
                         frame=frame, orf=orf, ppm=0.0, inframe_inorf=inframe_inorf, count=count).execute()
 
-    click.echo(green_fg(">>> Generating stats for database %s ..." % os.path.basename(blast_parsed_results_filepath)))
+    click.echo(green_fg(">>> Generating gene stats for database %s ..." % os.path.basename(blast_parsed_results_filepath)))
     generate_stats(blast_count)
     finish = time.time()
     hr, min, sec = elapsed_time(start, finish)
