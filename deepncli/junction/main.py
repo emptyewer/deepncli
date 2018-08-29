@@ -13,7 +13,7 @@ from tqdm import tqdm
 from functools import partial
 from sys import platform as _platform
 import joblib.parallel as parallel
-from collections import Counter
+from collections import Counter, defaultdict
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -102,7 +102,7 @@ def jsearch(directory, filename, input_data_folder, junction_folder, junction_se
 
 
 def junction_search(directory, junction_folder, input_data_folder, blast_results_folder,
-                    junction_sequence, exclusion_sequence):
+                    junction_sequence, exclusion_sequence, threads):
     unmap_files = get_sam_filelist(directory, input_data_folder)
     if not len(unmap_files):
         click.echo(red_fg(">>> ERROR: No .sam files found in directory %s." % directory))
@@ -111,10 +111,9 @@ def junction_search(directory, junction_folder, input_data_folder, blast_results
     click.echo(cyan_fg(">>> The primary, secondary, and tertiary sequences searched are:"))
     for j in junction_seqs:
         click.echo(yellow_fg("    %s" % j))
-    cores = parallel.cpu_count()
-    click.echo(cyan_fg('>>> Starting junction search on %s cores.' % cores))
-    parallel.Parallel(n_jobs=cores)(parallel.delayed(jsearch)(directory, f, input_data_folder, junction_folder,
-                                                              junction_seqs, exclusion_sequence) for f in unmap_files)
+    click.echo(cyan_fg('>>> Starting junction search on %s cores.' % threads))
+    parallel.Parallel(n_jobs=threads)(parallel.delayed(jsearch)(directory, f, input_data_folder, junction_folder,
+                                                                junction_seqs, exclusion_sequence) for f in unmap_files)
     multi_convert(directory, junction_folder, blast_results_folder)
 
 
@@ -143,17 +142,18 @@ def blast_search(directory, db_name, blast_results_folder):
 
 def create_gene_list(gene_list_path):
     fh = open(gene_list_path, "r")
+    nm_gene_dictionary = defaultdict()
     for line in fh:
         split = line.split()
-        if not Gene.select().where(Gene.gene_name == split[1], Gene.orf_start == int(split[6]) + 1,
-                                   Gene.nm_number == split[0], Gene.orf_stop == int(split[7])):
-            Gene.insert(gene_name=split[1], orf_start=int(split[6]) + 1, orf_stop=int(split[7]),
-                        mrna=split[9], intron=split[8], chromosome=split[2], nm_number=split[0]).execute()
+        nm_gene_dictionary[split[0]] = [split[1], int(split[6]) + 1, int(split[7]), split[8]]
+        Gene.create(gene_name=split[1], orf_start=int(split[6]) + 1, orf_stop=int(split[7]),
+                    mrna=split[9], intron=split[8], chromosome=split[2], nm_number=split[0])
+    return nm_gene_dictionary
 
 
 def generate_stats(blast_count):
     gene_query = Gene.select()
-    for gene in gene_query:
+    for gene in tqdm(gene_query, unit=" genes"):
         junc_query = Junction.select().where(Junction.gene == gene)
         frames = []
         orfs = []
@@ -175,7 +175,7 @@ def generate_stats(blast_count):
 
 def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_results_query_folder, gene_list_file):
     start = time.time()
-    click.echo(magenta_fg(">>> Parsing blast results for file %s" % blasttxt))
+    click.echo(magenta_fg(">>> Reading blast output for file %s" % blasttxt))
     blast_parsed_results_filepath = os.path.join(directory, blast_results_query_folder,
                                                  blasttxt.replace(".blast.txt", ".db"))
     gene_list_path = os.path.join(os.path.expanduser('~'), ".deepn", gene_list_file)
@@ -183,12 +183,15 @@ def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_result
     jdb = JunctionsDatabase(blast_parsed_results_filepath)
     jdb.create_tables()
     # Populate gene table
-    create_gene_list(gene_list_path)
+    nm_gene_dictionary = create_gene_list(gene_list_path)
     blast_results_handle = open(os.path.join(directory, blast_results_folder, blasttxt), 'r')
     previous_bitscore = 0
-    blast_count = 1
+    blast_count = 0
+    rejected_count = 0
+    accepted_count = 0
     collect_results = True
-    click.echo(yellow_fg(">>> Counting blast hits for file %s ..." % blasttxt))
+    click.echo(yellow_fg(">>> Consolidating blast hits for file %s ..." % blasttxt))
+    parsed_results = defaultdict(int)
     bar = tqdm(total=count_lines(os.path.join(directory, blast_results_folder, blasttxt)), unit=' lines')
     for line in blast_results_handle:
         line.strip()
@@ -197,63 +200,66 @@ def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_result
             previous_bitscore = 0
             collect_results = True
             blast_count += 1
-        if "hits" in line and int(split[1]) > 100:
+
+        elif "hits" in line and int(split[1]) > 100:
             collect_results = False
 
-        if split[0] != '#' and collect_results and float(split[2]) > 98 and float(split[11]) > 50.0 and float(split[11]) > previous_bitscore:
+        elif split[0] != '#' and collect_results and float(split[2]) > 98 and float(split[11]) > 50.0 and float(split[11]) > previous_bitscore:
+            accepted_count += 1
             previous_bitscore = float(split[11]) * 0.98
             nm_number = split[1]
-            gene_record = Gene.select().where(Gene.nm_number == nm_number)
-            if not len(gene_record):
-                click.echo(red_fg(">>> ERROR: NM number %s not found in the gene list." % nm_number))
-                raise KeyError("%s not found." % nm_number)
-            gene = gene_record[0]
+            gene = nm_gene_dictionary[nm_number][0]
             position = int(split[8])
             query_start = int(split[6])
             fudge_factor = query_start - 1
-            _frame = position - gene.orf_start - fudge_factor
+            _frame = position - nm_gene_dictionary[nm_number][1] - fudge_factor
             # Frame Calculation
             frame = "not_in_frame"
             if _frame % 3 == 0 or _frame == 0:
                 frame = "in_frame"
-            if gene.intron == "INTRON":
+            if nm_gene_dictionary[nm_number][3] == "INTRON":
                 frame = "intron"
             if int(split[9]) - position < 0:
                 frame = "backwards"
             # Orf calculation
             orf = "in_orf"
-            if position < gene.orf_start:
+            if position < nm_gene_dictionary[nm_number][1]:
                 orf = "upstream"
-            if position > gene.orf_stop:
+            if position > nm_gene_dictionary[nm_number][2]:
                 orf = "downstream"
             # Frame Orf calculation
             inframe_inorf = False
             if frame == 'in_frame' and orf == 'in_orf':
                 inframe_inorf = True
-
-            junction_record = Junction.select().where(Junction.gene == gene, Junction.position == position,
-                                                      Junction.query_start == query_start)
-            if not len(junction_record):
-                Junction.insert(gene=gene, position=position, query_start=query_start,
-                                frame=frame, orf=orf, ppm=0.0, inframe_inorf=inframe_inorf, count=1).execute()
-            else:
-                junction_record[0].count += 1
-                junction_record[0].save()
+            parsed_results["|".join([gene, nm_number, frame, orf, str(int(inframe_inorf)), str(position),
+                                     str(query_start)])] += 1
+        else:
+            rejected_count += 1
         bar.update(1)
-    click.echo(green_fg(">>> Generating stats for file %s ..." % blasttxt))
+    click.echo(red_fg(">>> Accepted %d and rejected %d blast hits for file %s ..." % (accepted_count,
+                                                                                      rejected_count, blasttxt)))
+    click.echo(magenta_fg(">>> Inserting junctions into "
+                          "database %s ..." % os.path.basename(blast_parsed_results_filepath)))
+    for key in tqdm(parsed_results.keys(), unit=" junctions"):
+        gene_name, nm_number, frame, orf, inframe_inorf, position, query_start = key.split("|")
+        count = parsed_results[key]
+        gene = Gene.select().where(Gene.gene_name == gene_name)
+        Junction.insert(gene=gene, position=position, query_start=query_start,
+                        frame=frame, orf=orf, ppm=0.0, inframe_inorf=inframe_inorf, count=count).execute()
+
+    click.echo(green_fg(">>> Generating stats for database %s ..." % os.path.basename(blast_parsed_results_filepath)))
     generate_stats(blast_count)
     finish = time.time()
     hr, min, sec = elapsed_time(start, finish)
-    click.echo(cyan_fg("Finished parsing file %s in time %d hr, %d min, %d sec" % (blasttxt, hr, min, sec)))
+    click.echo(cyan_fg("Finished parsing blast file %s in time %d hr, %d min, %d sec" % (blasttxt, hr, min, sec)))
     jdb.close_db()
 
 
-def parse_blast_results(directory, blast_results_folder, blast_results_query_folder, gene_list_file):
+def parse_blast_results(directory, blast_results_folder, blast_results_query_folder, gene_list_file, threads):
     blast_results_list = get_file_list(directory, blast_results_folder, ".txt")
-    cores = parallel.cpu_count()
-    click.echo(cyan_fg('>>> Starting parsing blast results on %s cores.' % cores))
-    parallel.Parallel(n_jobs=cores)(parallel.delayed(_parse_blast_results)(directory,
-                                                                           blast_results_folder, f,
-                                                                           blast_results_query_folder,
-                                                                           gene_list_file) for f in blast_results_list)
+    click.echo(cyan_fg('>>> Parsing blast results on %s cores.' % threads))
+    parallel.Parallel(n_jobs=threads)(parallel.delayed(_parse_blast_results)(directory,
+                                                                             blast_results_folder, f,
+                                                                             blast_results_query_folder,
+                                                                             gene_list_file) for f in blast_results_list)
 
