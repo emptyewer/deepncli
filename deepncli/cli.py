@@ -5,7 +5,7 @@
 from .utils.io import check_and_create_folders
 from .utils.download import download_data
 from .junction.main import junction_search, blast_search, parse_blast_results
-from .genecount.main import count_genes
+# from .genecount.main import count_genes
 # Library imports
 import os
 import sys
@@ -127,22 +127,22 @@ def junction_make(config, *args, **kwargs):
     parse_blast_results(kwargs['dir'], blast_results_folder, blast_results_query, gene_list_file)
 
 
-@main.command()
-@deepn_option("--dir", required=True, help="path to work folder")
-@deepn_option("--genome", required=True, help="name of the reference organism. "
-                                              "options: mm10/hg38/saccer3/hg38_pGAD/saccer3_pGAD")
-@deepn_option("--unmapped", is_flag=True, help="if flag is enabled, .sam files will "
-                                               "be read from unmapped_sam_files folder")
-@pass_config
-def gene_count(config, *args, **kwargs):
-    click.echo(green_fg("\n{}  Gene Count  {}\n".format(">" * 10, "<" * 10)))
-    input_data_folder = 'unmapped_sam_files' if kwargs['unmapped'] else 'sam_files'
-    exon_file = exon_dictionary[kwargs['genome']]
-    summary_folder = 'gene_count_summary'
-    check_and_create_folders(kwargs['dir'], ['chromosome_files', 'gene_count_summary', 'gene_count_indices'],
-                             interactive=kwargs['interactive'])
-    # Count genes
-    count_genes(kwargs['dir'], input_data_folder, summary_folder, exon_file)
+# @main.command()
+# @deepn_option("--dir", required=True, help="path to work folder")
+# @deepn_option("--genome", required=True, help="name of the reference organism. "
+#                                               "options: mm10/hg38/saccer3/hg38_pGAD/saccer3_pGAD")
+# @deepn_option("--unmapped", is_flag=True, help="if flag is enabled, .sam files will "
+#                                                "be read from unmapped_sam_files folder")
+# @pass_config
+# def gene_count(config, *args, **kwargs):
+#     click.echo(green_fg("\n{}  Gene Count  {}\n".format(">" * 10, "<" * 10)))
+#     input_data_folder = 'unmapped_sam_files' if kwargs['unmapped'] else 'sam_files'
+#     exon_file = exon_dictionary[kwargs['genome']]
+#     summary_folder = 'gene_count_summary'
+#     check_and_create_folders(kwargs['dir'], ['chromosome_files', 'gene_count_summary', 'gene_count_indices'],
+#                              interactive=kwargs['interactive'])
+#     # Count genes
+#     count_genes(kwargs['dir'], input_data_folder, summary_folder, exon_file)
 
 
 if __name__ == "__main__":
