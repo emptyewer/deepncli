@@ -126,18 +126,23 @@ def blast_search(directory, db_name, blast_results_folder):
     click.echo(green_fg(">>> Selected Blast DB: %s" % db_name))
     file_list = get_file_list(directory, blast_results_folder, ".fa")
     for file_name in file_list:
-        start = time.time()
-        output_file = os.path.join(directory, blast_results_folder, file_name.replace(".junctions.fa", '.blast.txt'))
-        click.echo(yellow_fg(">>> Running BLAST search for file: " + file_name))
-        blast_command_list = [os.path.join(blast_path, 'blastn' + suffix),
-                              '-query', os.path.join(directory, blast_results_folder, file_name), '-db', db_path,
-                              '-task', 'blastn', '-dust', 'no', '-num_threads', str(parallel.cpu_count()),
-                              '-outfmt', '7', '-out', output_file, '-evalue', '0.2', '-max_target_seqs', '10']
-        blast_pipe = subprocess.Popen(blast_command_list, shell=False)
-        blast_pipe.wait()
-        finish = time.time()
-        hr, min, sec = elapsed_time(start, finish)
-        click.echo(cyan_fg("Finished blasting file %s in time %d hr, %d min, %d sec" % (file_name, hr, min, sec)))
+        if not os.path.getsize(os.path.join(directory, blast_results_folder, file_name)) == 0:
+            start = time.time()
+            output_file = os.path.join(directory, blast_results_folder, file_name.replace(".junctions.fa", '.blast.txt'))
+            click.echo(yellow_fg(">>> Running BLAST search for file: " + file_name))
+            blast_command_list = [os.path.join(blast_path, 'blastn' + suffix),
+                                  '-query', os.path.join(directory, blast_results_folder, file_name), '-db', db_path,
+                                  '-task', 'blastn', '-dust', 'no', '-num_threads', str(parallel.cpu_count()),
+                                  '-outfmt', '7', '-out', output_file, '-evalue', '0.2', '-max_target_seqs', '10']
+            blast_pipe = subprocess.Popen(blast_command_list, shell=False)
+            blast_pipe.wait()
+            finish = time.time()
+            hr, min, sec = elapsed_time(start, finish)
+            click.echo(cyan_fg("Finished blasting file %s in time %d hr, %d min, %d sec" % (file_name, hr, min, sec)))
+        else:
+            click.echo(red_fg(">>> ERROR: File %s does not have any junctions, "
+                              "please check if they right genome was chosen." % file_name))
+            sys.exit(1)
 
 
 def create_gene_list(gene_list_path):
