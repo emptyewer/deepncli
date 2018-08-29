@@ -151,8 +151,8 @@ def create_gene_list(gene_list_path):
     for line in fh:
         split = line.split()
         nm_gene_dictionary[split[0]] = [split[1], int(split[6]) + 1, int(split[7]), split[8]]
-        Gene.create(gene_name=split[1], orf_start=int(split[6]) + 1, orf_stop=int(split[7]),
-                    mrna=split[9].upper(), intron=split[8], chromosome=split[2], nm_number=split[0])
+        Gene.get_or_create(gene_name=split[1], orf_start=int(split[6]) + 1, orf_stop=int(split[7]),
+                           mrna=split[9].upper(), intron=split[8], chromosome=split[2], nm_number=split[0])
     return nm_gene_dictionary
 
 
