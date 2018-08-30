@@ -12,7 +12,8 @@ import os
 import sys
 import click
 from functools import partial
-
+import warnings
+warnings.filterwarnings("ignore")
 
 green_fg = partial(click.style, fg='green')
 yellow_fg = partial(click.style, fg='yellow')
@@ -122,13 +123,30 @@ def junction_make(config, *args, **kwargs):
     # create folders for junction make
     check_and_create_folders(kwargs['dir'], ['junction_files', 'blast_results', 'blast_results_query'],
                              interactive=kwargs['interactive'])
-    # search for junctions
-    junction_search(kwargs['dir'], junction_folder, input_data_folder, blast_results_folder,
-                    junction_sequence, exclusion_sequence, threads)
-    # blast the junctions
-    blast_search(kwargs['dir'], blast_db, blast_results_folder)
-    # parse blast results
-    parse_blast_results(kwargs['dir'], blast_results_folder, blast_results_query, gene_list_file, threads)
+    if kwargs['interactive']:
+        if not click.confirm(magenta_fg('\nDo you want to search junctions and blast?')):
+            click.echo(red_fg("...Skipping search junctions and blast..."))
+        else:
+            # search for junctions
+            junction_search(kwargs['dir'], junction_folder, input_data_folder, blast_results_folder,
+                            junction_sequence, exclusion_sequence, threads)
+            # blast the junctions
+            blast_search(kwargs['dir'], blast_db, blast_results_folder)
+
+        if not click.confirm(magenta_fg('\nDo you want to parse blast results')):
+            click.echo(red_fg("ABORTING..."))
+            sys.exit(1)
+        else:
+            # parse blast results
+            parse_blast_results(kwargs['dir'], blast_results_folder, blast_results_query, gene_list_file, threads)
+    else:
+        # search for junctions
+        junction_search(kwargs['dir'], junction_folder, input_data_folder, blast_results_folder,
+                        junction_sequence, exclusion_sequence, threads)
+        # blast the junctions
+        blast_search(kwargs['dir'], blast_db, blast_results_folder)
+        # parse blast results
+        parse_blast_results(kwargs['dir'], blast_results_folder, blast_results_query, gene_list_file, threads)
 
 
 # @main.command()
