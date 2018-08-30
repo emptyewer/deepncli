@@ -64,7 +64,10 @@ def search_for_junctions(filepath, jseqs, exclusion_sequence, output_filehandle)
         return value
 
     input_filehandle = open(filepath)
-    bar = tqdm(total=count_lines(filepath), unit=' lines')
+    bar = tqdm(total=count_lines(filepath), unit=' lines',
+               desc="Search",
+               bar_format="{desc}: {percentage:3.0f}% | elapsed: {elapsed}, "
+                          "remaining: {remaining} | {rate_fmt}{postfix}")
     for line in input_filehandle:
         line_split = line.strip().split()
         if line_split[0][0] != "@" and line_split[2] == "*":
@@ -88,7 +91,7 @@ def multi_convert(directory, infolder, outfolder):
 
 def jsearch(directory, filename, input_data_folder, junction_folder, junction_sequence, exclusion_sequence):
     exclusion_sequence = exclusion_sequence.upper() if exclusion_sequence else ""
-    click.echo(green_fg('>>> Searching junctions in file: %s' % filename))
+    click.echo(green_fg('\n>>> Searching junctions in file: %s' % filename))
     start = time.time()
     filepath = os.path.join(directory, input_data_folder, filename)
 
@@ -98,20 +101,20 @@ def jsearch(directory, filename, input_data_folder, junction_folder, junction_se
     output_file_handle.close()
     finish = time.time()
     hr, min, sec = elapsed_time(start, finish)
-    click.echo(cyan_fg("Finished searching junctions in %s in time %d hr, %d min, %d sec" % (filename, hr, min, sec)))
+    click.echo(cyan_fg("\nFinished searching junctions in %s in time %d hr, %d min, %d sec" % (filename, hr, min, sec)))
 
 
 def junction_search(directory, junction_folder, input_data_folder, blast_results_folder,
                     junction_sequence, exclusion_sequence, threads):
     unmap_files = get_sam_filelist(directory, input_data_folder)
     if not len(unmap_files):
-        click.echo(red_fg(">>> ERROR: No .sam files found in directory %s." % directory))
+        click.echo(red_fg("\n>>> ERROR: No .sam files found in directory %s." % directory))
         sys.exit(1)
     junction_seqs = make_search_junctions(junction_sequence)
-    click.echo(cyan_fg(">>> The primary, secondary, and tertiary sequences searched are:"))
+    click.echo(cyan_fg("\n>>> The primary, secondary, and tertiary sequences searched are:"))
     for j in junction_seqs:
         click.echo(yellow_fg("    %s" % j))
-    click.echo(cyan_fg('>>> Starting junction search on %s cores.' % threads))
+    click.echo(cyan_fg('\n>>> Starting junction search on %s cores.' % threads))
     parallel.Parallel(n_jobs=threads)(parallel.delayed(jsearch)(directory, f, input_data_folder, junction_folder,
                                                                 junction_seqs, exclusion_sequence) for f in unmap_files)
     multi_convert(directory, junction_folder, blast_results_folder)
@@ -123,13 +126,13 @@ def blast_search(directory, db_name, blast_results_folder):
         suffix = '.exe'
     blast_path = os.path.join(os.path.expanduser('~'), ".deepn", "data", "blast")
     db_path = os.path.join(os.path.expanduser('~'), ".deepn", db_name)
-    click.echo(green_fg(">>> Selected Blast DB: %s" % db_name))
+    click.echo(green_fg("\n>>> Selected Blast DB: %s" % db_name))
     file_list = get_file_list(directory, blast_results_folder, ".fa")
     for file_name in file_list:
         if not os.path.getsize(os.path.join(directory, blast_results_folder, file_name)) == 0:
             start = time.time()
             output_file = os.path.join(directory, blast_results_folder, file_name.replace(".junctions.fa", '.blast.txt'))
-            click.echo(yellow_fg(">>> Running BLAST search for file: " + file_name))
+            click.echo(yellow_fg("\n>>> Running BLAST search for file: " + file_name))
             blast_command_list = [os.path.join(blast_path, 'blastn' + suffix),
                                   '-query', os.path.join(directory, blast_results_folder, file_name), '-db', db_path,
                                   '-task', 'blastn', '-dust', 'no', '-num_threads', str(parallel.cpu_count()),
@@ -138,9 +141,9 @@ def blast_search(directory, db_name, blast_results_folder):
             blast_pipe.wait()
             finish = time.time()
             hr, min, sec = elapsed_time(start, finish)
-            click.echo(cyan_fg("Finished blasting file %s in time %d hr, %d min, %d sec" % (file_name, hr, min, sec)))
+            click.echo(cyan_fg("\nFinished blasting file %s in time %d hr, %d min, %d sec" % (file_name, hr, min, sec)))
         else:
-            click.echo(red_fg(">>> ERROR: File %s does not have any junctions, "
+            click.echo(red_fg("\n>>> ERROR: File %s does not have any junctions, "
                               "please check if they right genome was chosen." % file_name))
             sys.exit(1)
 
@@ -158,7 +161,9 @@ def create_gene_list(gene_list_path):
 
 def generate_stats(blast_count):
     gene_query = Gene.select()
-    for gene in tqdm(gene_query, unit=" genes"):
+    for gene in tqdm(gene_query, unit=" genes", desc="Stats",
+                     bar_format="{desc}: {percentage:3.0f}% | elapsed: {elapsed}, "
+                                "remaining: {remaining} | {rate_fmt}{postfix}"):
         junc_query = Junction.select().where(Junction.gene == gene)
         frames = []
         orfs = []
@@ -180,7 +185,7 @@ def generate_stats(blast_count):
 
 def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_results_query_folder, gene_list_file):
     start = time.time()
-    click.echo(magenta_fg(">>> Reading blast output for file %s" % blasttxt))
+    click.echo(magenta_fg("\n>>> Reading blast output for file %s" % blasttxt))
     blast_parsed_results_filepath = os.path.join(directory, blast_results_query_folder,
                                                  blasttxt.replace(".blast.txt", ".db"))
     gene_list_path = os.path.join(os.path.expanduser('~'), ".deepn", gene_list_file)
@@ -195,9 +200,12 @@ def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_result
     rejected_count = 0
     accepted_count = 0
     collect_results = True
-    click.echo(yellow_fg(">>> Consolidating blast hits for file %s ..." % blasttxt))
+    click.echo(yellow_fg("\n>>> Consolidating blast hits for file %s ..." % blasttxt))
     parsed_results = defaultdict(int)
-    bar = tqdm(total=count_lines(os.path.join(directory, blast_results_folder, blasttxt)), unit=' lines')
+    bar = tqdm(total=count_lines(os.path.join(directory, blast_results_folder, blasttxt)), unit=' lines',
+               desc="Parse",
+               bar_format="{desc}: {percentage:3.0f}% | elapsed: {elapsed}, "
+                          "remaining: {remaining} | {rate_fmt}{postfix}")
     for line in blast_results_handle:
         line.strip()
         split = line.split()
@@ -241,22 +249,25 @@ def _parse_blast_results(directory, blast_results_folder, blasttxt, blast_result
         else:
             rejected_count += 1
         bar.update(1)
-    click.echo(red_fg(">>> Accepted %d and rejected %d blast hits for file %s ..." % (accepted_count,
+    click.echo(red_fg("\n>>> Accepted %d and rejected %d blast hits for file %s ..." % (accepted_count,
                                                                                       rejected_count, blasttxt)))
-    click.echo(magenta_fg(">>> Inserting junctions into "
+    click.echo(magenta_fg("\n>>> Inserting junctions into "
                           "database %s ..." % os.path.basename(blast_parsed_results_filepath)))
-    for key in tqdm(parsed_results.keys(), unit=" junctions"):
+    for key in tqdm(parsed_results.keys(), unit=" junctions",
+                    desc="Insert",
+                    bar_format="{desc}: {percentage:3.0f}% | elapsed: {elapsed}, "
+                               "remaining: {remaining} | {rate_fmt}{postfix}"):
         gene_name, nm_number, frame, orf, inframe_inorf, position, query_start = key.split("|")
         count = parsed_results[key]
         gene = Gene.select().where(Gene.gene_name == gene_name)
         Junction.insert(gene=gene, position=position, query_start=query_start,
                         frame=frame, orf=orf, ppm=0.0, inframe_inorf=inframe_inorf, count=count).execute()
 
-    click.echo(green_fg(">>> Generating gene stats for database %s ..." % os.path.basename(blast_parsed_results_filepath)))
+    click.echo(green_fg("\n>>> Generating gene stats for database %s ..." % os.path.basename(blast_parsed_results_filepath)))
     generate_stats(blast_count)
     finish = time.time()
     hr, min, sec = elapsed_time(start, finish)
-    click.echo(cyan_fg("Finished parsing blast file %s in time %d hr, %d min, %d sec" % (blasttxt, hr, min, sec)))
+    click.echo(cyan_fg("\nFinished parsing blast file %s in time %d hr, %d min, %d sec" % (blasttxt, hr, min, sec)))
     jdb.close_db()
 
 
